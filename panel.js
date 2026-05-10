@@ -79,6 +79,12 @@ export function renderPanel() {
         <div class="field">
           <label>Random seed</label>
           <input type="number" id="seed-val" value="${rMod.seed}"/>
+        </div>
+        <div class="field">
+          <label>Root sequence <span style="color:#bbb;font-size:10px">(optional — overrides length)</span></label>
+          <textarea id="root-seq" rows="3"
+            style="width:100%;font-family:monospace;font-size:11px;padding:4px 7px;border:1px solid #e0e0e0;border-radius:4px;background:#fff;color:#1a1a1a;resize:vertical"
+            placeholder="Leave blank for random…">${state.rootSeq}</textarea>
         </div>` : ''}
       </div>
     </div>
@@ -149,6 +155,19 @@ export function renderPanel() {
   document.getElementById('seed-val')?.addEventListener('input', e => {
     ensureOverride(state.selectedId, 'model');
     state.overrides.get(state.selectedId).model.seed = parseInt(e.target.value) || 42;
+  });
+
+  document.getElementById('root-seq')?.addEventListener('input', e => {
+    state.rootSeq = e.target.value.trim();
+    // sync seq-len to root sequence length when non-empty
+    if (state.rootSeq) {
+      const seqLenInput = document.getElementById('seq-len');
+      if (seqLenInput) {
+        seqLenInput.value = state.rootSeq.length;
+        ensureOverride(state.selectedId, 'model');
+        state.overrides.get(state.selectedId).model.seqLen = state.rootSeq.length;
+      }
+    }
   });
 
   document.getElementById('ind-on')?.addEventListener('change', e => {

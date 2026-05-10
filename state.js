@@ -1,8 +1,7 @@
 // ── Model lists ───────────────────────────────────────────────────────────────
 export const AMINO_MODELS = new Set(['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW','MTREV24','AAJC']);
-export const ALL_MODELS   = ['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW','MTREV24', 
-                             'NUCJC'];
-                              // 'HKY','GTR','NUCJC','TAMURA92'];
+export const ALL_MODELS   = ['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW','MTREV24',
+                              'HKY','GTR','NUCJC','TAMURA92'];
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 export const DEF_MODEL = { name: 'LG', seqLen: 100, seed: 42 };
@@ -24,6 +23,7 @@ export const state = {
   overrides:  new Map(),   // nodeId → {model?, indel?}
   selectedId: null,
   lastOutput: '',
+  rootSeq:    '',
   pan:        { x: 0, y: 0 },
   zoom:       1,
   drag:       null,        // null | { sx, sy, px, py, moved }

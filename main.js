@@ -17,25 +17,14 @@ const outPanel    = document.getElementById('output-panel');
 // Wire node selection → panel update
 setOnSelect(renderPanel);
 
-// ── WASM init ─────────────────────────────────────────────────────────────────
-createSailfish().then(m => {
-  state.M = m;
-  statusDot.className = 'ready';
-  statusDot.title     = 'WASM ready';
-  parseBtn.disabled   = false;
-}).catch(e => {
-  statusDot.className = 'error';
-  statusDot.title     = 'WASM failed: ' + e.message;
-});
-
 // ── Parse ─────────────────────────────────────────────────────────────────────
-parseBtn.addEventListener('click', () => {
+function doParse() {
   const newick = newickInput.value.trim();
   if (!newick || !state.M) return;
 
   if (state.wasmTree) { try { state.wasmTree.delete(); } catch (_) {} }
   state.overrides.clear();
-  state.selectedId = null;
+  state.rootSeq = '';
 
   try {
     state.wasmTree = new state.M.Tree(newick, false);
@@ -44,16 +33,31 @@ parseBtn.addEventListener('click', () => {
     const root = state.nodes.find(n => n.isRoot);
     state.overrides.set(root.id, { model: { ...DEF_MODEL }, indel: { ...DEF_INDEL } });
 
-    noTreeMsg.style.display  = 'none';
-    panelPH.textContent      = 'Click a node\nto edit its model';
-    panelPH.style.display    = 'flex';
-    panelBody.style.display  = 'none';
+    noTreeMsg.style.display = 'none';
     fitToView();
     render();
     runBtn.disabled = false;
+
+    // Auto-select root and open panel
+    state.selectedId = root.id;
+    renderPanel();
   } catch (e) {
     alert('Parse error: ' + e.message);
   }
+}
+
+parseBtn.addEventListener('click', doParse);
+
+// ── WASM init ─────────────────────────────────────────────────────────────────
+createSailfish().then(m => {
+  state.M = m;
+  statusDot.className = 'ready';
+  statusDot.title     = 'WASM ready';
+  parseBtn.disabled   = false;
+  doParse(); // auto-parse default newick on load
+}).catch(e => {
+  statusDot.className = 'error';
+  statusDot.title     = 'WASM failed: ' + e.message;
 });
 
 // ── Run ───────────────────────────────────────────────────────────────────────
