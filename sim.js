@@ -115,7 +115,7 @@ export function runSim() {
   const rMod   = resolveModelFull(root.id);
   const rInd   = resolveIndel(root.id);
   const nRuns  = Math.max(1, parseInt(document.getElementById('n-runs').value) || 1);
-  const toFile = nRuns > 2;
+  const toFile = nRuns > 1;
 
   try {
     let fasta = '', viewText = '', lastResult;
@@ -123,12 +123,12 @@ export function runSim() {
     for (let r = 0; r < nRuns; r++) {
       const result = runOnce(rMod.seed + r, rMod, rInd);
       lastResult   = result;
-      const prefix = nRuns > 1 ? `run${r + 1}_` : '';
 
       for (const row of result.rows) {
-        const name = row.name ? `${prefix}${row.name}` : `${prefix}seq${result.rows.indexOf(row)}`;
-        fasta += `>${name}\n${row.seq}\n`;
+        fasta += `${row.seq}\n`;
       }
+
+      fasta += '\n';
 
       if (!toFile) {
         if (r > 0) viewText += '\n' + '─'.repeat(64) + '\n';

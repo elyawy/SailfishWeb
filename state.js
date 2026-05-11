@@ -4,8 +4,8 @@ export const ALL_MODELS   = ['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW
                               'HKY','GTR','NUCJC','TAMURA92'];
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
-export const DEF_MODEL = { name: 'LG', seqLen: 100, seed: 42 };
-export const DEF_INDEL = { enabled: false, insertionRate: 0.05, deletionRate: 0.05 };
+export const DEF_MODEL = { name: 'JONES', seqLen: 100, seed: 42 };
+export const DEF_INDEL = { enabled: false, insertionRate: 0.01, deletionRate: 0.01 };
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 export const LEAF_GAP  = 20;
