@@ -9,6 +9,29 @@ import { render } from './canvas.js';
 const panelPH   = document.getElementById('panel-placeholder');
 const panelBody = document.getElementById('panel-content');
 
+// ── Distribution fields helper ────────────────────────────────────────────────
+// Renders a dist-type select + the single relevant param input for that type.
+function distBlock(prefix, dist, geomP, zipfA, disabled) {
+  const dis  = disabled ? ' disabled' : '';
+  const geom = dist === 'geometric';
+  return `
+    <div class="field">
+      <label>${prefix === 'ins' ? 'Insertion' : 'Deletion'} length distribution</label>
+      <select id="${prefix}-dist"${dis}>
+        <option value="geometric"${geom  ? ' selected' : ''}>Geometric</option>
+        <option value="zipf"     ${!geom ? ' selected' : ''}>Zipf</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>${geom ? 'p (geometric, 0–1)' : 'a (Zipf exponent)'}</label>
+      <input type="number" id="${prefix}-dist-param"
+        value="${geom ? geomP : zipfA}"
+        min="${geom ? '0.01' : '1.01'}"
+        max="${geom ? '0.99' : ''}"
+        step="${geom ? '0.01' : '0.1'}"${dis}/>
+    </div>`;
+}
+
 export function renderPanel() {
   if (state.selectedId === null) {
     panelPH.style.display  = 'flex';
@@ -70,7 +93,7 @@ export function renderPanel() {
           <label>Model${modInherit ? `<span class="inh-src">↑ ${modSrcName}</span>` : ''}</label>
           <select id="mod-sel"${modInherit ? ' disabled' : ''}>${modelOpts}</select>
         </div>
-        ${!isRoot && hasModOvr ? `<div style="font-size:10px;color:#bbb;margin-top:2px;line-height:1.4">Per-clade substitution models not yet applied in simulation — root model is used.</div>` : ''}
+        ${!isRoot && hasModOvr ? `` : ''}
         ${isRoot ? `
         <div class="field">
           <label>Sequence length</label>
@@ -106,13 +129,22 @@ export function renderPanel() {
             Enable${indInherit ? `<span class="inh-src">↑ ${indSrcName}</span>` : ''}
           </label>
         </div>
+
         <div class="field">
           <label>Insertion rate</label>
           <input type="number" id="ins-rate" value="${rInd.insertionRate}" min="0" max="1" step="0.01"${indInherit ? ' disabled' : ''}/>
         </div>
-        <div class="field">
+        ${distBlock('ins', rInd.insDist, rInd.insGeomP, rInd.insZipfA, indInherit)}
+
+        <div class="field" style="margin-top:6px">
           <label>Deletion rate</label>
           <input type="number" id="del-rate" value="${rInd.deletionRate}" min="0" max="1" step="0.01"${indInherit ? ' disabled' : ''}/>
+        </div>
+        ${distBlock('del', rInd.delDist, rInd.delGeomP, rInd.delZipfA, indInherit)}
+
+        <div class="field" style="margin-top:6px">
+          <label>Max indel length</label>
+          <input type="number" id="max-indel-len" value="${rInd.maxIndelLen}" min="1" max="200" step="1"${indInherit ? ' disabled' : ''}/>
         </div>
       </div>
     </div>
@@ -159,7 +191,6 @@ export function renderPanel() {
 
   document.getElementById('root-seq')?.addEventListener('input', e => {
     state.rootSeq = e.target.value.trim();
-    // sync seq-len to root sequence length when non-empty
     if (state.rootSeq) {
       const seqLenInput = document.getElementById('seq-len');
       if (seqLenInput) {
@@ -181,9 +212,43 @@ export function renderPanel() {
     state.overrides.get(state.selectedId).indel.insertionRate = parseFloat(e.target.value) || 0;
   });
 
+  // Dist type selects — re-render panel so the param label/range updates
+  document.getElementById('ins-dist')?.addEventListener('change', e => {
+    ensureOverride(state.selectedId, 'indel');
+    state.overrides.get(state.selectedId).indel.insDist = e.target.value;
+    renderPanel();
+  });
+
+  document.getElementById('ins-dist-param')?.addEventListener('input', e => {
+    ensureOverride(state.selectedId, 'indel');
+    const ind  = state.overrides.get(state.selectedId).indel;
+    const val  = parseFloat(e.target.value);
+    if (ind.insDist === 'zipf') ind.insZipfA = val || 2.0;
+    else                        ind.insGeomP = val || 0.5;
+  });
+
   document.getElementById('del-rate')?.addEventListener('input', e => {
     ensureOverride(state.selectedId, 'indel');
     state.overrides.get(state.selectedId).indel.deletionRate = parseFloat(e.target.value) || 0;
+  });
+
+  document.getElementById('del-dist')?.addEventListener('change', e => {
+    ensureOverride(state.selectedId, 'indel');
+    state.overrides.get(state.selectedId).indel.delDist = e.target.value;
+    renderPanel();
+  });
+
+  document.getElementById('del-dist-param')?.addEventListener('input', e => {
+    ensureOverride(state.selectedId, 'indel');
+    const ind  = state.overrides.get(state.selectedId).indel;
+    const val  = parseFloat(e.target.value);
+    if (ind.delDist === 'zipf') ind.delZipfA = val || 2.0;
+    else                        ind.delGeomP = val || 0.5;
+  });
+
+  document.getElementById('max-indel-len')?.addEventListener('input', e => {
+    ensureOverride(state.selectedId, 'indel');
+    state.overrides.get(state.selectedId).indel.maxIndelLen = parseInt(e.target.value) || 20;
   });
 
   document.getElementById('reset-sub')?.addEventListener('click', () => {

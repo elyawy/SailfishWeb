@@ -119,3 +119,39 @@ export function nodeName(id) {
   const n = state.nodes[id];
   return n.name || (n.isRoot ? 'root' : `node ${id}`);
 }
+
+// ── Per-clade simulation helpers ──────────────────────────────────────────────
+
+// Generates a Newick string for the subtree at nodeId.
+// Nodes in stopAtIds are treated as leaves (their subtrees are pruned).
+// asRoot suppresses the branch length on nodeId itself (use when nodeId is
+// the root of a sub-simulation, not the global root).
+export function toNewick(nodeId, stopAtIds = new Set(), asRoot = false) {
+  const n      = state.nodes[nodeId];
+  const branch = (n.isRoot || asRoot) ? '' : `:${n.branchLen}`;
+
+  if (n.isLeaf || stopAtIds.has(nodeId)) {
+    const name = n.name || `node_${nodeId}`;
+    return `${name}${branch}`;
+  }
+
+  const label    = '';
+  const children = n.children.map(c => toNewick(c, stopAtIds)).join(',');
+  return `(${children})${label}${branch}`;
+}
+
+// Returns the IDs of the nearest descendants of nodeId that have an explicit
+// model override, stopping the search at each one found (nested overrides are
+// handled by recursive simulateClade calls, not collected here).
+export function findImmediateModelOverrides(nodeId) {
+  const overrides = [];
+  function search(id, isStart) {
+    if (!isStart && state.overrides.get(id)?.model) {
+      overrides.push(id);
+      return;
+    }
+    for (const childId of state.nodes[id].children) search(childId, false);
+  }
+  search(nodeId, true);
+  return overrides;
+}

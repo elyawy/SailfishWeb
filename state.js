@@ -5,7 +5,18 @@ export const ALL_MODELS   = ['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
 export const DEF_MODEL = { name: 'JONES', seqLen: 100, seed: 42 };
-export const DEF_INDEL = { enabled: false, insertionRate: 0.01, deletionRate: 0.01 };
+export const DEF_INDEL = {
+  enabled:       false,
+  insertionRate: 0.01,
+  insDist:       'geometric',
+  insGeomP:      0.5,
+  insZipfA:      2.0,
+  deletionRate:  0.01,
+  delDist:       'geometric',
+  delGeomP:      0.5,
+  delZipfA:      2.0,
+  maxIndelLen:   20,
+};
 
 // ── Layout constants ──────────────────────────────────────────────────────────
 export const LEAF_GAP  = 20;
