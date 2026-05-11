@@ -4,18 +4,30 @@ export const ALL_MODELS   = ['LG','WAG','DAYHOFF','JONES','CPREV45','HIVB','HIVW
                               'HKY','GTR','NUCJC','TAMURA92'];
 
 // ── Defaults ──────────────────────────────────────────────────────────────────
-export const DEF_MODEL = { name: 'JONES', seqLen: 100, seed: 42 };
+export const DEF_MODEL = {
+  name:             'JONES',
+  seqLen:           100,
+  seed:             42,
+  // Rate variation
+  rateVarEnabled:   false,
+  gammaCategories:  4,
+  gammaAlpha:       1.0,
+  invarProp:        0.0,    // invariant sites; only with SIMPLE + no correlation
+  correlation:      0.0,    // ρ for bivariate normal copula
+  indelAwareRates:  false,  // INDEL_AWARE protocol; only when indels on + correlation > 0
+};
+
 export const DEF_INDEL = {
   enabled:       false,
   insertionRate: 0.01,
-  insDist:       'geometric',
+  insDist:       'zipf',
   insGeomP:      0.5,
-  insZipfA:      2.0,
+  insZipfA:      1.7,
   deletionRate:  0.01,
-  delDist:       'geometric',
+  delDist:       'zipf',
   delGeomP:      0.5,
-  delZipfA:      2.0,
-  maxIndelLen:   20,
+  delZipfA:      1.7,
+  maxIndelLen:   50,
 };
 
 // ── Layout constants ──────────────────────────────────────────────────────────

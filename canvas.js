@@ -111,15 +111,112 @@ export function render() {
       ctx.fillStyle = '#444';
       ctx.fillText(n.name, sx + 8, sy + 4);
     } else {
-      const mdl   = resolveModel(n.id);
+      // const mdl   = resolveModel(n.id);
       const ind   = resolveIndel(n.id);
-      const label = mdl + (ind.enabled ? ' · indel' : '');
+      const label = (ind.enabled ? ' · indel' : '');
       ctx.font      = '10px monospace';
       ctx.fillStyle = '#bbb';
       ctx.fillText(label, sx + 6, sy - 5);
     }
   }
   ctx.restore();
+  // Scale bar (screen-space)
+  drawBranchScale();
+}
+
+// Draw branch-length scale in bottom-right above DOM legend
+function drawBranchScale() {
+  if (!state.nodes.length) return;
+  const wrap = canvas.parentElement;
+  const legend = document.getElementById('canvas-legend');
+  if (!legend) return;
+
+  const d = dpr();
+  // CSS pixels width available for tree drawing
+  const maxX  = Math.max(...state.nodes.map(n => n.x)) || 1;
+  const drawW = lw() - PAD_LEFT - PAD_RIGHT;
+  const pxPerWorld = (drawW / maxX) * state.zoom; // CSS px per world-x unit
+  if (!isFinite(pxPerWorld) || pxPerWorld <= 0) return;
+
+  // fixed visual width for box/line in CSS px (only label changes)
+  const widthPx = Math.max(60, Math.min(160, wrap.clientWidth * 0.18));
+
+  // compute world length corresponding to that visual width
+  let worldLen = widthPx / pxPerWorld;
+
+  // Nice rounding for label only: 1,2,5 * 10^n
+  const pow = Math.pow(10, Math.floor(Math.log10(worldLen)));
+  const mant = worldLen / pow;
+  let niceMant = 1;
+  if (mant >= 5) niceMant = 5;
+  else if (mant >= 2) niceMant = 2;
+  const niceWorldLen = niceMant * pow;
+
+  // Position: align flush-right above DOM legend (match legend right:12px)
+  const wrapRect = wrap.getBoundingClientRect();
+  const legendRect = legend.getBoundingClientRect();
+  const margin = 12; // same as CSS for #canvas-legend right:12px
+
+  // background box dims
+  const pad = 6;
+  const boxW = widthPx + pad * 2;
+  const boxH = 28;
+
+  // place box so its right edge sits `margin` px from wrap right, and bottom sits above legend with small gap
+  const boxX = margin;
+  const legendTopRel = legendRect.top - wrapRect.top;
+  const boxY = Math.max(margin, legendTopRel - margin - boxH);
+
+  // line coordinates inside box
+  const x = boxX + pad;
+  const y = boxY + boxH / 2 + 2; // baseline y for line
+
+  // Draw on canvas in screen-space (scale by d)
+  ctx.save();
+  ctx.scale(d, d);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  roundRect(ctx, boxX, boxY, boxW, boxH, 6);
+  ctx.fill();
+  ctx.stroke();
+
+  // scale line
+  ctx.beginPath();
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 1;
+  const lx = x;
+  const rx = x + widthPx;
+  const ly = y;
+  ctx.moveTo(lx, ly);
+  ctx.lineTo(rx, ly);
+  ctx.moveTo(lx, ly - 6);
+  ctx.lineTo(lx, ly + 6);
+  ctx.moveTo(rx, ly - 6);
+  ctx.lineTo(rx, ly + 6);
+  ctx.stroke();
+
+  // label
+  ctx.font = '11px monospace';
+  ctx.fillStyle = '#333';
+  const label = (+niceWorldLen.toPrecision(4)).toString();
+  const tx = boxX + boxW / 2;
+  const ty = boxY + 10;
+  ctx.textAlign = 'center';
+  ctx.fillText(label, tx, ty + 4);
+
+  ctx.restore();
+}
+
+// helper: rounded rect path
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 // ── Hit test ──────────────────────────────────────────────────────────────────
