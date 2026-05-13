@@ -93,6 +93,7 @@ export function runOnce(seed, rMod, rInd) {
   const seqLen    = rMod.seqLen;
   const isAmino   = AMINO_MODELS.has(modelName);
   const indelOn   = state.nodes.some(n => resolveIndel(n.id).enabled);
+  const isSaveRoot  = state.saveRoot;
 
   const toDelete = [];
   const track = o => { toDelete.push(o); return o; };
@@ -103,6 +104,10 @@ export function runOnce(seed, rMod, rInd) {
     factory.set_replacement_model(M.modelCode[modelName]);
     applyRateModel(factory, rMod, M, track);
     factory.build_replacement_model();
+
+    if (isSaveRoot) {
+      simCtx.set_save_root();
+    }
 
     const sim = track(isAmino
       ? M.createAminoSim(factory, simCtx)
@@ -207,11 +212,17 @@ export function runSim() {
   try {
     let fasta = '', viewText = '', lastResult;
 
+    const t0 = performance.now();
+
     for (let r = 0; r < nRuns; r++) {
       const result = runOnce(rMod.seed + r, rMod, rInd);
       lastResult   = result;
 
-      for (const row of result.rows) fasta += `>${row.name}\n${row.seq}\n`;
+      // If row.name is `N1` replace with Root
+      for (const row of result.rows) {
+        if (row.name === 'N1') row.name = 'Root';
+        fasta += `>${row.name}\n${row.seq}\n`;
+      }
       fasta += '\n';
 
       if (!toFile) {
@@ -222,13 +233,16 @@ export function runSim() {
       }
     }
 
+    const elapsed = ((performance.now() - t0) / 1000).toFixed(3);
+
+
     state.lastOutput = fasta;
 
     if (toFile) {
       downloadFasta(fasta, `sailfish_${nRuns}runs.fasta`);
-      showOutput(`${nRuns} runs completed.\nModel: ${rMod.name}  |  Indels: ${rInd.enabled}  |  MSA length: ${lastResult.msaLen}\nSeeds: ${rMod.seed}–${rMod.seed + nRuns - 1}\n\nSaved to sailfish_${nRuns}runs.fasta`);
+      showOutput(`Simulation time: ${elapsed}s\n` + '─'.repeat(64) + '\n' + `${nRuns} runs completed.\nModel: ${rMod.name}  |  Indels: ${rInd.enabled}  |  MSA length: ${lastResult.msaLen}\nSeeds: ${rMod.seed}–${rMod.seed + nRuns - 1}\n\nSaved to sailfish_${nRuns}runs.fasta`);
     } else {
-      showOutput(viewText);
+      showOutput(`Simulation time: ${elapsed}s\n` + '─'.repeat(64) + '\n' + viewText);
     }
 
   } catch (e) {

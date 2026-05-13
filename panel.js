@@ -26,9 +26,9 @@ function distBlock(prefix, dist, geomP, zipfA, disabled) {
       <label>${geom ? 'p (geometric, 0–1)' : 'a (Zipf exponent)'}</label>
       <input type="number" id="${prefix}-dist-param"
         value="${geom ? geomP : zipfA}"
-        min="${geom ? '0.01' : '1.01'}"
-        max="${geom ? '0.99' : ''}"
-        step="${geom ? '0.01' : '0.1'}"${dis}/>
+        min="${geom ? '0.01' : '1.001'}"
+        max="${geom ? '0.99' : '2.0'}"
+        step="${geom ? '0.01' : '0.001'}"${dis}/>
     </div>`;
 }
 
@@ -123,7 +123,17 @@ export function renderPanel() {
       <div class="pname">${n.name || (isRoot ? 'Root' : `Node ${n.id}`)}</div>
       <div class="pmeta">${metaParts.join(' · ')}</div>
     </div>
-
+    <div class="psec">
+      <div class="sec-head"><span class="sec-title">Output</span></div>
+        <div class="field" style="display:flex;align-items:center;justify-content:space-between">
+          <label style="margin:0">Include root in MSA</label>
+          <label class="tog">
+            <input type="checkbox" id="save-root"${state.saveRoot ? ' checked' : ''}>
+            <div class="tog-track"></div><div class="tog-thumb"></div>
+          </label>
+        </div>
+      </div>
+    </div>
     ${isRoot ? `
     <div class="psec">
       <div class="sec-head"><span class="sec-title">Substitution model</span></div>
@@ -226,6 +236,11 @@ export function renderPanel() {
         state.overrides.get(state.selectedId).model.seqLen = state.rootSeq.length;
       }
     }
+    scheduleAutoRun();
+  });
+
+  document.getElementById('save-root')?.addEventListener('change', e => {
+    state.saveRoot = e.target.checked;
     scheduleAutoRun();
   });
 

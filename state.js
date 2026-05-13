@@ -50,4 +50,5 @@ export const state = {
   pan:        { x: 0, y: 0 },
   zoom:       1,
   drag:       null,        // null | { sx, sy, px, py, moved }
+  saveRoot:   false,
 };
